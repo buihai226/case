@@ -1,20 +1,20 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import PlainTextResponse
 from paddleocr import PaddleOCR
 from PIL import Image
+import numpy as np
 import io
 
 app = FastAPI()
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
-@app.post("/extract-captcha")
+@app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
     image_data = await file.read()
     image = Image.open(io.BytesIO(image_data)).convert("RGB")
-    import numpy as np
     image_np = np.array(image)
 
     result = ocr.ocr(image_np, cls=True)
-
 
     serial_y = None
     captcha_y = None
@@ -23,7 +23,6 @@ async def extract_captcha(file: UploadFile = File(...)):
     for line in result[0]:
         box, (text, conf) = line
         y_center = sum([pt[1] for pt in box]) / 4
-        
         if "Serial" in text:
             serial_y = y_center
         elif "captcha" in text.lower():
@@ -38,6 +37,6 @@ async def extract_captcha(file: UploadFile = File(...)):
                 captchas.append(text)
 
     if captchas:
-        return  captchas[0]
+        return captchas[0]
     else:
-        return "Cant't found"
+        return "Can't found"
