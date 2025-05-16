@@ -38,6 +38,6 @@ async def extract_captcha(file: UploadFile = File(...)):
                 captchas.append(text)
 
     if captchas:
-        return { captchas[0]}
+        return  captchas[0]
     else:
-        return {"Cant't found"}
+        return "Cant't found"
