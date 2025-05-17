@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+@app.get("/", response_class=PlainTextResponse)
+async def health_check():
+    logger.info("Health check endpoint accessed")
+    return "Application is running"
+
 @app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
     try:
@@ -62,5 +67,5 @@ if __name__ == "__main__":
     import os
 
     port = int(os.environ.get("PORT", 10000))
-    logger.info(f"Running on port {port}")  # Sử dụng logger 
+    logger.info(f"Starting server on port {port}")
     uvicorn.run("main:app", host="0.0.0.0", port=port)
