@@ -18,6 +18,11 @@ async def health_check(request: Request):
     logger.info(f"Health check endpoint accessed with method: {request.method}")
     return PlainTextResponse("Application is running")
 
+@app.get("/extract-captcha", response_class=PlainTextResponse)
+async def extract_captcha_get():
+    logger.info("GET request to /extract-captcha")
+    return "This endpoint requires a POST request with a file. Use multipart/form-data with key 'file'."
+
 @app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
     try:
