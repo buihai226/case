@@ -1,10 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.responses import PlainTextResponse
 from paddleocr import PaddleOCR
 from PIL import Image
 import numpy as np
 import io
 import logging
+import os
 
 # Thiết lập logging
 logging.basicConfig(level=logging.INFO)
@@ -12,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-@app.get("/", response_class=PlainTextResponse)
-async def health_check():
-    logger.info("Health check endpoint accessed")
-    return "Application is running"
+@app.route("/", methods=["GET", "HEAD"])
+async def health_check(request: Request):
+    logger.info(f"Health check endpoint accessed with method: {request.method}")
+    return PlainTextResponse("Application is running")
 
 @app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
@@ -64,8 +65,8 @@ async def extract_captcha(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    import os
 
     port = int(os.environ.get("PORT", 10000))
+    logger.info(f"Environment variable PORT: {os.environ.get('PORT')}")
     logger.info(f"Starting server on port {port}")
     uvicorn.run("main:app", host="0.0.0.0", port=port)
