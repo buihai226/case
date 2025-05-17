@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Khởi tạo PaddleOCR ở global scope
+logger.info("Initializing PaddleOCR at startup")
+ocr = PaddleOCR(use_angle_cls=True, lang='en')
+logger.info("PaddleOCR initialized successfully at startup")
+
 @app.route("/", methods=["GET", "HEAD"])
 async def health_check(request: Request):
     logger.info(f"Health check endpoint accessed with method: {request.method}")
@@ -26,10 +31,6 @@ async def extract_captcha_get():
 @app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
     try:
-        logger.info("Initializing PaddleOCR")
-        ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Khởi tạo PaddleOCR trong endpoint
-        logger.info("PaddleOCR initialized successfully")
-
         logger.info("Reading and processing image")
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data)).convert("RGB")
