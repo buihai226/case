@@ -4,17 +4,27 @@ from paddleocr import PaddleOCR
 from PIL import Image
 import numpy as np
 import io
+import logging
+
+# Thiết lập logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
 @app.post("/extract-captcha", response_class=PlainTextResponse, responses={200: {"content": {"text/plain": {}}}})
 async def extract_captcha(file: UploadFile = File(...)):
     try:
+        logger.info("Initializing PaddleOCR")
+        ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Khởi tạo PaddleOCR trong endpoint
+        logger.info("PaddleOCR initialized successfully")
+
+        logger.info("Reading and processing image")
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data)).convert("RGB")
         image_np = np.array(image)
 
+        logger.info("Running OCR on image")
         result = ocr.ocr(image_np, cls=True)
 
         serial_y = None
@@ -38,10 +48,13 @@ async def extract_captcha(file: UploadFile = File(...)):
                     captchas.append(text)
 
         if captchas:
+            logger.info(f"Captcha found: {captchas[0]}")
             return captchas[0]
         else:
+            logger.info("No captcha found")
             return "Can't found"
     except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
         return f"Error: {str(e)}"
 
 if __name__ == "__main__":
@@ -49,5 +62,5 @@ if __name__ == "__main__":
     import os
 
     port = int(os.environ.get("PORT", 10000))
-    print(f"Running on port {port}")  # Thêm để kiểm tra port
+    logger.info(f"Running on port {port}")  # Sử dụng logger 
     uvicorn.run("main:app", host="0.0.0.0", port=port)
